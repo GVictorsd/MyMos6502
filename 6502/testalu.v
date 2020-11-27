@@ -4,14 +4,14 @@
 	reg [7:0] aIn,bIn;
 	reg clk=0,cin=0,sums=0,subs=0,ands=0,eors=0,ors=0,shftr=0,shftcr=0,decEn=0,reset=0,adloa=0,sboa=0;
 	wire [7:0] adl,sb;
-	wire cout;
-	alu dut(aIn,bIn,clk,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,reset,adloa,sboa,adl,sb,cout);
+	wire cout,zero,overflow,neg;
+	alu dut(aIn,bIn,clk,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,reset,adloa,sboa,adl,sb,cout,zero,overflow,neg);
 
 	always #2 clk = ~clk;
 
 	initial
 	begin
-		aIn<=8'h05; bIn<=8'h0a;
+		aIn<=8'hff; bIn<=8'h01;
 		reset<=1'b1; adloa<=1'b1;
 		#4 reset<=0; sums<=1;
 		#4 sums<=0; subs<=1;

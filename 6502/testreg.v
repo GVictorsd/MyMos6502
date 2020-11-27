@@ -4,8 +4,9 @@
 	module test;
 	reg[7:0] bus;
 	reg clk,wa,oa,clr;
-	wire[7:0] buss;
-	register regis(buss,clk,wa,oa,clr);
+	wire[7:0] buss,busout;
+//	register1 regis(buss,clk,wa,oa,clr);
+	register2 dut(bus,clk,wa,oa,clr,busout);
 
 	assign buss= ~oa ? bus:8'hzz;
 	
