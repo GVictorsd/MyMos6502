@@ -2,6 +2,9 @@
 	`include "pclow.v"
 	`include "pchigh.v"
 	`include "register.v"
+	`include "alu.v"
+	`include "prealu.v"
+	`include "statusReg.v"
 
 	module board(
 		inout[7:0] dataio,
@@ -39,4 +42,27 @@
 	register1 x(sb,clk,xwa,xoa,clr);
 	register1 y(sb,clk,ywa,yoa,clr);
 
+	//stack pointer
+	wire spwa,spsboa,spadloa;
+	register3 sp(sb,clk,spwa,spsboa,spadloa,clr,sb,adl);
+
+	//alu
+	wire[7:0] aOut,bOut;
+	wire predbwa,preadlwa,presbwa;
+	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,clk,clr,aOut,bOut);
+
+	wire cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn;
+	wire aluadloa,alusboa,cout,zero,overflow,neg;
+	alu Alu(aOut,bOut,clk,cin,sums,subs,ands,eors,ors,
+			shftr,shftcr,decEn,clr,aluadloa,alusboa,
+			adl,sb,cout,zero,overflow,neg);
+
+	//accumulator
+	wire accwa,accdboa,accsboa;
+	register3 acc(sb,clk,accwa,accsboa,accdboa,clr,sb,db);
+
+	//status register
+	reg[7:0] status;
+	wire srwa,sroa,irqdis,brk;
+	statusreg sr(clk,clr,srwa,sroa,cout,zero,overflow,neg,irqdis,decEn,brk,db);
 	endmodule

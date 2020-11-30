@@ -49,3 +49,22 @@
 			store <= datain;
 	end
 	endmodule
+/***************** REGISTER TYPE-3 ******************/
+
+	module register3(
+		input[7:0] datain,
+		input clk,wa,oa1,oa2,clr,
+		output[7:0] out1,out2);
+	reg[7:0] store;
+
+	assign out1 = oa1 ? store : 8'hzz;
+	assign out2 = oa2 ? store : 8'hzz;
+
+	always@ (posedge clk)
+	begin
+		if(clr)
+			store <= 8'h00;
+		else if(wa)
+			store <= datain;
+	end
+	endmodule
