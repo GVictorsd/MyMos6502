@@ -5,13 +5,19 @@
 	`include "alu.v"
 	`include "prealu.v"
 	`include "statusReg.v"
+	`include "passmosfet.v"
 
 	module board(
 		inout[7:0] dataio,
-		input clki,
+		input clk,
 		output[7:0] abh,abl);
 	wire[7:0] db,adl,adh,sb;
 	wire clr;
+	
+	//pass mosfets between adh,db and sb
+	wire adhsb,dbsb;
+	passMosfet p1(sb,adh,adhsb);
+	passMosfet p2(sb,db,dbsb);
 
 	//input data latch
 	wire dlwa,dldboa,dladloa,dladhoa;
@@ -62,7 +68,8 @@
 	register3 acc(sb,clk,accwa,accsboa,accdboa,clr,sb,db);
 
 	//status register
-	reg[7:0] status;
-	wire srwa,sroa,irqdis,brk;
-	statusreg sr(clk,clr,srwa,sroa,cout,zero,overflow,neg,irqdis,decEn,brk,db);
+	wire[7:0] status;
+	wire sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa;
+	statusreg sr(db,cout,zero,overflow,neg,sircary,sirirqdis,sirdecmod,clk,clr,sirwa,saluwa,abuswa,aoa,db,status);
+
 	endmodule

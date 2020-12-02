@@ -2,10 +2,18 @@
 	`include "statusReg.v"
 
 	module test;
-	reg clk=0,reset=0,carry=0,zero=0,overflow=0,neg=0;
-	reg irqdis=0,decmode=0,brk=0;
+	
+	reg [7:0] busin;
+	reg acary=0,azero=0,aoverflow=0,aneg=0;
+	reg ircary=0,irirqdis=0,irdecmode=0;
+	reg clk=0,reset=0,wair=0,waalu=0,wabus=0,oa=0;
 	wire[7:0] status;
-	statusreg dut(clk,reset,carry,zero,overflow,neg,irqdis,decmode,brk,status);
+	statusreg dut(
+		busin,
+		acary,azero,aoverflow,aneg,
+		ircary,irirqdis,irdecmode,
+		clk,reset,wair,waalu,wabus,oa,
+		status);
 
 	always #2 clk = ~clk;
 
