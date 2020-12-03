@@ -4,12 +4,14 @@
 		input clk,wa,oadb,oaal,oaah);
 	reg[7:0] store;
 
-	assign databs = oadb? store:8'hzz;
-	assign addrlow = oaal? store:8'hzz;
-	assign addrhi = oaah? store:8'hzz;
+	assign databs = oadb ? store : 8'hzz;
+	assign addrlow = oaal ? store : 8'hzz;
+	assign addrhi = oaah ? store : 8'hzz;
 
 	always@ (posedge clk)
+	begin
 		if(wa)
-			store<= datain;
+			store <= datain;
 
+	end
 	endmodule

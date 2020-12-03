@@ -76,7 +76,7 @@
 			
 			///// for second half
 			if(sums)
-				temp[7:4] = aIn[7:4] + bIn[7:4] + {tempcry1,tempc1};
+				temp[7:4] = aIn[7:4] + bIn[7:4] + tempcry1 + tempc1;
 			else if (subs)
 				temp[7:4] = aIn[7:4] - bIn[7:4] + tempc1;
 			//if result excedes 0x9
