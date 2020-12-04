@@ -1,3 +1,8 @@
+	/************************* BOARD MODULE *********************
+	* Connecting all the modules together
+	*
+	************************************************************/
+
 	`timescale 10ns/1ns
 
 	`include "indatalatch.v"
@@ -7,17 +12,21 @@
 	`include "alu.v"
 	`include "prealu.v"
 	`include "statusReg.v"
+	`include "stackpointer.v"
 	`include "passmosfet.v"
+	`include "instCtrl.v"
+	`include "instdecode.v"
 
 	module board(
 		inout[7:0] dataio,
-//		input clk,
-		output[7:0] abh,abl);
+//		input clk,clr,irq,nmi,
+		output[7:0] abh,abl,
+		output sync,rw);
 	wire[7:0] db,adl,adh,sb;
-	reg  clr=0,clk=0;
-	
+	reg  clr=0,clk=0,irq=0,nmi=0;
+
 	//pass mosfets between adh,db and sb
-	reg  adhsb=0,dbsb=0;
+	reg  adhsb=0,dbsb=0,rw=0;
 	passMosfet p1(sb,adh,adhsb);
 	passMosfet p2(sb,db,dbsb);
 
@@ -52,8 +61,8 @@
 	register1 y(sb,clk,ywa,yoa,clr);
 
 	//stack pointer
-	reg  spwa=0,spsboa=0,spadloa=0;
-	register3 sp(sb,clk,spwa,spsboa,spadloa,clr,sb,adl);
+	reg  spwa=0,spsboa=0,spadloa=0,spdec=0;
+	stackpointer sp(sb,clk,clr,spwa,spdec,spsboa,spadloa,sb,adl);
 
 	//alu
 	wire[7:0] aOut,bOut;
@@ -76,6 +85,17 @@
 	reg  sircary=0,sirirqdis=0,sirdecmod=0,sirwa=0,saluwa=0,abuswa=0,aoa=0;
 	statusreg sr(db,cout,zero,overflow,neg,sircary,sirirqdis,sirdecmod,clk,clr,sirwa,saluwa,abuswa,aoa,status,db);
 
+	///control logic
+	//instruction cycle control
+	wire icyc,rcyc,scyc;
+	wire[7:0] instin,instout;
+	wire[2:0] cycout;
+	predecodereg predecreg(dataio,clk,instin);
+	instctrl ir(instin,~clk,irq,rst,icyc,rcyc,scyc,sync,instout,cycout);
+	wire contsig;
+	instdecode instdec(instout,cycout,clr,icyc,rcyc,scyc,contsig);
+
+
 	always #2 clk = ~clk;
 
 	initial
@@ -85,7 +105,7 @@
 		#4 clr<=0;dl.store<=8'h05;ablwa<=1;dladloa=1;
 		#4 ablwa<=0;dladloa=0;dl.store<=8'h00;abhwa<=1;dladhoa=1;
 		$display("%h	%h\n",abh,abl);
-		#4 dl.store<=8'h05;abhwa<=0;dladhoa=0;
+		#4 dl.store<=8'h00;abhwa<=0;dladhoa=0;
 		#4 dldboa<=1;accwa<=1;dbsb<=1; 
 		#4 dldboa<=0;accwa<=0;dbsb<=0;$display("%h",acc.store);
 		
@@ -95,9 +115,9 @@
 		$display("%h	%h\n",abh,abl);
 		#4 dl.store<=8'h0f;abhwa<=0;dladhoa=0;
 		#4 dldboa<=1;predbwa=1;accsboa<=1;presbwa=1;
-		#4 dldboa<=0;predbwa=0;accsboa<=0;presbwa=0;subs<=1;decEn<=1;
+		#4 dldboa<=0;predbwa=0;accsboa<=0;presbwa=0;sums<=1;decEn<=1;
 		$display("%h	%h",pre.storeB,pre.storeA);
-		#4 subs<=0;decEn<=0;alusboa=1;accwa<=1;
+		#4 sums<=0;decEn<=0;alusboa=1;accwa<=1;
 		#4 $display("%h",acc.store);
 		$finish;
 	end

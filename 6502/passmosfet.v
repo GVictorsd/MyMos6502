@@ -1,3 +1,10 @@
+	/******************* PASS-MOSFETS ******************
+	* module to model passmosfets between 
+	* addressHighBus,specialBus and
+	* dataBus,specialBus...
+	* control bit (ctrl) is used to enable the mosfets
+	***************************************************/
+
 	module passMosfet(
 		inout[7:0] ina,inb,
 		input ctrl);
