@@ -26,63 +26,62 @@
 	reg  clr=0,clk=0,irq=0,nmi=0;
 
 	//pass mosfets between adh,db and sb
-	reg  adhsb=0,dbsb=0,rw=0;
+	wire  adhsb,dbsb,rw;
 	passMosfet p1(sb,adh,adhsb);
 	passMosfet p2(sb,db,dbsb);
 
 	//input data latch
-	reg  dlwa=0,dldboa=0,dladloa=0,dladhoa=0;
+	wire  dlwa,dldboa,dladloa,dladhoa;
 	inlatch dl(dataio,db,adl,adh,clk,dlwa,dldboa,dladloa,dladhoa);
 
 	//program counter low
-	reg  pcladlwa=0,pclinc=0,pcladloa=0,pcldboa=0;
+	wire  pcladlwa,pclinc,pcladloa,pcldboa;
+	wire setreset,setirq,setnmi;
 	wire pclc;
-	pclow pcl(adl,pcladlwa,pclinc,pcladloa,pcldboa,clk,db,adl,pclc);
+	pclow pcl(adl,pcladlwa,pclinc,setreset,setirq,setnmi,pcladloa,pcldboa,clk,db,adl,pclc);
 
 	//program counter high
-	reg  pchadhwa=0,pchinc=0,pchadhoa=0,pchdboa=0;
-	pchigh pch(adh,clk,pchadhwa,pchinc,pclc,pchadhoa,pchdboa,adh,db);
+	wire  pchadhwa,pchinc,pchadhoa,pchdboa;
+	pchigh pch(adh,clk,pchadhwa,pchinc,setreset,setirq,setnmi,pclc,pchadhoa,pchdboa,adh,db);
 
 	//data output register
-	reg  dorwa=0,doroa=0;
+	wire  dorwa,doroa;
 	register2 dor(db,~clk,dorwa,doroa,clr,dataio);
 
 	//address bus high register
-	reg  abhwa=0;
+	wire  abhwa;
 	register2 abhreg(adh,~clk,abhwa,1'b1,clr,abh);
 
 	//address bus low register
-	reg  ablwa=0;
+	wire  ablwa;
 	register2 ablreg(adl,~clk,ablwa,1'b1,clr,abl);
 
 	//index registers(x and y)
-	reg  xwa=0,xoa=0,ywa=0,yoa=0;
+	wire  xwa,xoa,ywa,yoa;
 	register1 x(sb,clk,xwa,xoa,clr);
 	register1 y(sb,clk,ywa,yoa,clr);
 
 	//stack pointer
-	reg  spwa=0,spsboa=0,spadloa=0,spdec=0;
+	wire  spwa,spsboa,spadloa,spdec;
 	stackpointer sp(sb,clk,clr,spwa,spdec,spsboa,spadloa,sb,adl);
 
 	//alu
 	wire[7:0] aOut,bOut;
-	reg  predbwa=0,preadlwa=0,presbwa=0;
-	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,clk,clr,aOut,bOut);
-
-	reg  cin=0,sums=0,subs=0,ands=0,eors=0,ors=0,shftr=0,shftcr=0,decEn=0;
-	reg  aluadloa=0,alusboa=0;
+	wire  predbwa,preadlwa,presbwa;
+	wire  cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn;
+	wire  aluadloa,alusboa;
 	wire cout,zero,overflow,neg;
 	alu Alu(aOut,bOut,clk,cin,sums,subs,ands,eors,ors,
 			shftr,shftcr,decEn,clr,aluadloa,alusboa,
 			adl,sb,cout,zero,overflow,neg);
 
 	//accumulator
-	reg  accwa=0,accdboa=0,accsboa=0; 
+	wire  accwa,accdboa,accsboa; 
 	register3 acc(sb,clk,accwa,accsboa,accdboa,clr,sb,db);
 
 	//status register
 	wire[7:0] status;
-	reg  sircary=0,sirirqdis=0,sirdecmod=0,sirwa=0,saluwa=0,abuswa=0,aoa=0;
+	wire  sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa;
 	statusreg sr(db,cout,zero,overflow,neg,sircary,sirirqdis,sirdecmod,clk,clr,sirwa,saluwa,abuswa,aoa,status,db);
 
 	///control logic
@@ -91,14 +90,20 @@
 	wire[7:0] instin,instout;
 	wire[2:0] cycout;
 	predecodereg predecreg(dataio,clk,instin);
-	instctrl ir(instin,~clk,irq,rst,icyc,rcyc,scyc,sync,instout,cycout);
+	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,icyc,rcyc,scyc,contsig);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,adhsb,dbsb,rw,dlwa,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchinc,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
 
 	always #2 clk = ~clk;
 
 	initial
+	begin
+		#1 clr<=1;
+		#4 clr<=0;
+		#40 $finish;
+	end
+/*	initial
 	begin
 		//lda...
 		#1 clr<=1;
@@ -121,7 +126,7 @@
 		#4 $display("%h",acc.store);
 		$finish;
 	end
-	
+*/
 	initial
 	begin
 		$dumpfile("vars.vcd");

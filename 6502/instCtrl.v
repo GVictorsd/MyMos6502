@@ -8,6 +8,8 @@
 	*	3bit timing cycle
 	**********************************************************************/
 
+	`timescale 10ns/1ns
+
 	module instctrl(
 		input[7:0] dataIn,
 		input clk,irq,rst,iCyc,rCyc,sCyc,
@@ -16,6 +18,12 @@
 		output reg[2:0] cycle);
 	wire[7:0] opcode;
 	wire[2:0] nxtcycle;
+	reg clk1;
+
+	always@(clk)
+	begin
+		#1 clk1 <= clk;
+	end
 
 	assign nxtcycle = rCyc ? 3'b000
 				: iCyc ? cycle + 3'b001
@@ -25,7 +33,7 @@
 	assign opcode = (nxtcycle==3'b001) ? (irq ? 8'h00:dataIn): ir;
 	assign sync = (nxtcycle==3'b001) ? 1'b1 : 1'b0;
 
-	always@(posedge clk)
+	always@(posedge clk1)
 	begin
 		if(rst)
 		begin
