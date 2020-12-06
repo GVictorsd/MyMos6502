@@ -30,8 +30,8 @@
 				: sCyc ? cycle + 3'b010
 				: cycle;
 
-	assign opcode = (nxtcycle==3'b001) ? (irq ? 8'h00:dataIn): ir;
-	assign sync = (nxtcycle==3'b001) ? 1'b1 : 1'b0;
+	assign opcode = (nxtcycle == 3'b001) ? (irq ? 8'h00 : dataIn): ir;
+	assign sync = (nxtcycle == 3'b001) ? 1'b1 : 1'b0;
 
 	always@(posedge clk1)
 	begin

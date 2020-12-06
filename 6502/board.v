@@ -22,17 +22,18 @@
 //		input clk,clr,irq,nmi,
 		output[7:0] abh,abl,
 		output sync,rw);
+	
 	wire[7:0] db,adl,adh,sb;
 	reg  clr=0,clk=0,irq=0,nmi=0;
-
+	
 	//pass mosfets between adh,db and sb
 	wire  adhsb,dbsb,rw;
 	passMosfet p1(sb,adh,adhsb);
 	passMosfet p2(sb,db,dbsb);
 
 	//input data latch
-	wire  dlwa,dldboa,dladloa,dladhoa;
-	inlatch dl(dataio,db,adl,adh,clk,dlwa,dldboa,dladloa,dladhoa);
+	wire  dldboa,dladloa,dladhoa;
+	inlatch dl(dataio,db,adl,adh,clk,1'b1,dldboa,dladloa,dladhoa);
 
 	//program counter low
 	wire  pcladlwa,pclinc,pcladloa,pcldboa;
@@ -41,8 +42,8 @@
 	pclow pcl(adl,pcladlwa,pclinc,setreset,setirq,setnmi,pcladloa,pcldboa,clk,db,adl,pclc);
 
 	//program counter high
-	wire  pchadhwa,pchinc,pchadhoa,pchdboa;
-	pchigh pch(adh,clk,pchadhwa,pchinc,setreset,setirq,setnmi,pclc,pchadhoa,pchdboa,adh,db);
+	wire  pchadhwa,pchadhoa,pchdboa;
+	pchigh pch(adh,clk,pchadhwa,setreset,setirq,setnmi,pclc,pchadhoa,pchdboa,adh,db);
 
 	//data output register
 	wire  dorwa,doroa;
@@ -92,15 +93,18 @@
 	predecodereg predecreg(dataio,clk,instin);
 	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,adhsb,dbsb,rw,dlwa,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchinc,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
-
+	reg[7:0] dummy;
+	assign dataio = dummy;
 	always #2 clk = ~clk;
 
 	initial
 	begin
 		#1 clr<=1;
 		#4 clr<=0;
+		dummy<=8'h57;
+		#20 dummy<=8'h28;
 		#40 $finish;
 	end
 /*	initial
