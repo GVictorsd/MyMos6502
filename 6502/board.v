@@ -16,15 +16,21 @@
 	`include "passmosfet.v"
 	`include "instCtrl.v"
 	`include "instdecode.v"
+	`include "ram.v"
 
 	module board(
-		inout[7:0] dataio,
+//		inout[7:0] dataio,
 //		input clk,clr,irq,nmi,
-		output[7:0] abh,abl,
+//		output[7:0] abh,abl,
 		output sync,rw);
-	
+
 	wire[7:0] db,adl,adh,sb;
 	reg  clr=0,clk=0,irq=0,nmi=0;
+	
+
+	wire[7:0] dataio,abh,abl;
+	ram rm({abh,abl},rw,clk,dataio);
+
 	
 	//pass mosfets between adh,db and sb
 	wire  adhsb,dbsb,rw;
@@ -37,13 +43,13 @@
 
 	//program counter low
 	wire  pcladlwa,pclinc,pcladloa,pcldboa;
-	wire setreset,setirq,setnmi;
+	wire setreset,setirq,setnmi,setstk;
 	wire pclc;
 	pclow pcl(adl,pcladlwa,pclinc,setreset,setirq,setnmi,pcladloa,pcldboa,clk,db,adl,pclc);
 
 	//program counter high
 	wire  pchadhwa,pchadhoa,pchdboa;
-	pchigh pch(adh,clk,pchadhwa,setreset,setirq,setnmi,pclc,pchadhoa,pchdboa,adh,db);
+	pchigh pch(adh,clk,pchadhwa,setreset,setirq,setnmi,setstk,pclc,pchadhoa,pchdboa,adh,db);
 
 	//data output register
 	wire  dorwa,doroa;
@@ -87,24 +93,22 @@
 
 	///control logic
 	//instruction cycle control
-	wire icyc,rcyc,scyc;
+	wire icyc,rcyc,scyc,sinst;
 	wire[7:0] instin,instout;
 	wire[2:0] cycout;
 	predecodereg predecreg(dataio,clk,instin);
-	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sync,instout,cycout);
+	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sinst,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
-	reg[7:0] dummy;
-	assign dataio = dummy;
 	always #2 clk = ~clk;
 
 	initial
 	begin
 		#1 clr<=1;
 		#4 clr<=0;
-		dummy<=8'h57;
-		#20 dummy<=8'h28;
+		rm.store[16'hfffc]<=8'h57;
+		rm.store[16'hfffd]<=8'h28;
 		#40 $finish;
 	end
 /*	initial

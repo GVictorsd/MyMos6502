@@ -4,17 +4,17 @@
 		input[7:0] inst,
 		input[2:0] cycle,
 		input clr,irq,nmi,
-		output reg icyc,rcyc,scyc,
+		output reg icyc,rcyc,scyc,sinst,
 		output reg
 	//pass mosfets
 	adhsb,dbsb,rw,
 	//input data latch
-	/*dlwa,*/dldboa,dladloa,dladhoa,
+	dldboa,dladloa,dladhoa,
 	//program counter low
 	pcladlwa,pclinc,pcladloa,pcldboa,
 	setreset,setirq,setnmi,
 	//program counter high
-	pchadhwa,pchadhoa,pchdboa,
+	setstk,pchadhwa,pchadhoa,pchdboa,
 	//data output register
 	dorwa,doroa,
 	//address bus high register
@@ -34,24 +34,13 @@
 	//status register
 	sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
-//////	reg[52:0] ctrlsig = {adhsb,dbsb,rw,dlwa,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa};
+	localparam[7:0] 
+		int=8'h00,opcode1=8'hzz,opcode2=8'hxx;
+
 	
-	localparam[7:0] int=8'h00,opcode1=8'hzz,opcode2=8'hxx;
-/*
 	always@(*)
 	begin
-
-	if(clr)
-	begin
-	$display("hi there");
-	{adhsb,dbsb,rw,dlwa,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc} = 57'd0;
-	setreset = 1'b1;
-	end
-
-	else
-*/	always@(*)
-	begin
-	{adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc} = 55'd0;
+	{adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc,setstk,sinst} = 57'd0;
 
 		case(cycle)
 			3'b000:begin
@@ -60,62 +49,61 @@
 						if(clr)
 						begin
 							setreset<=1'b1;
-							scyc<=1'b1;
+							icyc<=1;
+							sinst<=1;
 						end
 						else if(nmi)
 						begin
 							setnmi<=1'b1;
-							scyc<=1'b1;
+							icyc<=1'b1;
+							sinst<=1'b1;
 						end
 						else if(irq) 
 						begin
 							setirq<=1'b1;
-							scyc<=1'b1;
+							icyc<=1;
+							sinst<=1;
 						end
+						else
+							icyc<=1;
 						$display("hi1");
 					end
 				endcase
 				end
 			3'b001:begin
 				case(inst)
-					opcode1,opcode2:begin
+					int:begin
+						//write pcl to stack
+						pcldboa<=1;dorwa<=1;doroa<=1;
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						rw<=1;spdec<=1;icyc<=1;
+						$display("hi2");
 					end
 				endcase
 				end
 			3'b010:begin
 				case(inst)
 					int:begin	//reset
-						//write pcl to stack
-						pcldboa<=1;dorwa<=1;doroa<=1;
-						spadloa<=1;ablwa<=1;rw<=1;
-						spdec<=1;icyc<=1;
-						$display("hi2");
+						//write pch to stack
+						pchdboa<=1;dorwa<=1;doroa<=1;
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						rw<=1;spdec<=1;icyc<=1;
+						$display("hi3");
 					end
 				endcase
 				end
 			3'b011:begin
 				case(inst)
 					int:begin
-						//write pch to stack
-						pchdboa<=1;dorwa<=1;doroa<=1;
-						spadloa<=1;ablwa<=1;rw<=1;
-						spdec<=1;icyc<=1;
-						$display("hi3");
-					end
-				endcase
-				end
-			3'b100:begin
-				case(inst)
-					int:begin
 						//write status to stack
 						aoa<=1;dorwa<=1;doroa<=1;
-						spadloa<=1;ablwa<=1;rw<=1;
-						spdec<=1;icyc<=1;
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						rw<=1;spdec<=1;icyc<=1;
 						$display("hi4");
 					end
 				endcase
 				end
-			3'b101:begin
+			3'b100:begin
 				case(inst)
 					int:begin
 						pcladloa<=1;pchadhoa<=1;
@@ -125,7 +113,7 @@
 					end
 				endcase
 				end
-			3'b110:begin
+			3'b101:begin
 				case(inst)
 					int:begin
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
@@ -135,12 +123,19 @@
 					end
 				endcase
 				end
-			3'b111:begin
+			3'b110:begin
 				case(inst)
 					int:begin
 						dladloa<=1;dladhoa<=1;pcladlwa<=1;abhwa<=1;
-						rcyc<=1;pchadhwa<=1;
-						//#4.5 pchadhwa<=1;
+						icyc<=1;
+					end
+				endcase
+				end
+			3'b111:begin
+				case(inst)
+					int:begin
+						pchadhwa<=1;dladhoa<=1;pcladloa<=1;ablwa<=1;
+						rcyc<=1;
 					end
 				endcase
 				end

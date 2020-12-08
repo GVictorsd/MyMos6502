@@ -4,6 +4,7 @@
 	*	control signals: interrupt signal(irq),reset(rst),increment
 	*		timing cycle(iCyc), skip one timing cycle(sCyc),
 	*		reset cycle(rCyc)...
+	*		skip instruction fetch cycle(sinst)
 	* outputs: 8bit instruction(ir)
 	*	3bit timing cycle
 	**********************************************************************/
@@ -12,7 +13,7 @@
 
 	module instctrl(
 		input[7:0] dataIn,
-		input clk,irq,rst,iCyc,rCyc,sCyc,
+		input clk,irq,rst,iCyc,rCyc,sCyc,sinst,
 		output sync,
 		output reg[7:0] ir,
 		output reg[2:0] cycle);
@@ -30,7 +31,7 @@
 				: sCyc ? cycle + 3'b010
 				: cycle;
 
-	assign opcode = (nxtcycle == 3'b001) ? (irq ? 8'h00 : dataIn): ir;
+	assign opcode = (nxtcycle == 3'b001 & ~sinst) ? (irq ? 8'h00 : dataIn): ir;
 	assign sync = (nxtcycle == 3'b001) ? 1'b1 : 1'b0;
 
 	always@(posedge clk1)
