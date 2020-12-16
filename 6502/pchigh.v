@@ -9,7 +9,7 @@
 
 	module pchigh(
 		input[7:0] adhin,
-		input clk,adhwa,setreset,setirq,setnmi,setstk,pclc,adhoa,dboa,
+		input clk,adhwa,setreset,setirq,setnmi,setstk,setzero,pclc,adhoa,dboa,
 		output[7:0] adhout,dbout);
 	reg[7:0] store;
 
@@ -28,6 +28,7 @@
 	end
 	
 	assign adhout = setstk ? 8'h01 : 8'hzz;
+	assign adhout = setzero ? 8'h00 : 8'hzz;
 	assign adhout = adhoa ? store : 8'hzz;
 	assign dbout = dboa ? store : 8'hzz;
 

@@ -43,13 +43,13 @@
 
 	//program counter low
 	wire  pcladlwa,pclinc,pcladloa,pcldboa;
-	wire setreset,setirq,setnmi,setstk;
+	wire setreset,setirq,setnmi,setstk,setzero;
 	wire pclc;
 	pclow pcl(adl,pcladlwa,pclinc,setreset,setirq,setnmi,pcladloa,pcldboa,clk,db,adl,pclc);
 
 	//program counter high
 	wire  pchadhwa,pchadhoa,pchdboa;
-	pchigh pch(adh,clk,pchadhwa,setreset,setirq,setnmi,setstk,pclc,pchadhoa,pchdboa,adh,db);
+	pchigh pch(adh,clk,pchadhwa,setreset,setirq,setnmi,setstk,setzero,pclc,pchadhoa,pchdboa,adh,db);
 
 	//data output register
 	wire  dorwa,doroa;
@@ -74,13 +74,15 @@
 
 	//alu
 	wire[7:0] aOut,bOut;
-	wire  predbwa,preadlwa,presbwa;
+	wire  predbwa,preadlwa,presbwa,preldzero;
 	wire  cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn;
 	wire  aluadloa,alusboa;
 	wire cout,zero,overflow,neg;
+	wire aluadlwa;
+	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,preldzero,clk,clr,aOut,bOut);
 	alu Alu(aOut,bOut,clk,cin,sums,subs,ands,eors,ors,
-			shftr,shftcr,decEn,clr,aluadloa,alusboa,
-			adl,sb,cout,zero,overflow,neg);
+			shftr,shftcr,decEn,clr,aluadloa,alusboa,aluadlwa,
+			adl,adl,sb,cout,zero,overflow,neg);
 
 	//accumulator
 	wire  accwa,accdboa,accsboa; 
@@ -99,7 +101,7 @@
 	predecodereg predecreg(dataio,clk,instin);
 	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sinst,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,setzero,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,preldzero,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aluadlwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
 	always #2 clk = ~clk;
 
@@ -109,7 +111,10 @@
 		#4 clr<=0;
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
-		#40 $finish;
+		rm.store[16'h2857]<=8'h69;
+		rm.store[16'h2858]<=8'h47;
+		acc.store<=8'h12;
+		#100 $finish;
 	end
 /*	initial
 	begin

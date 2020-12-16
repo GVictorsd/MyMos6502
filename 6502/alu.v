@@ -15,6 +15,8 @@
 	input[7:0] aIn,bIn,
 	input clk,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,reset,
 	input adloa,sboa,
+	input adlwa,	//temp store adl in store
+	input[7:0] adlin,
 	output[7:0] adl,sb,
 	output cout,zero,overflow,neg);
 	
@@ -95,17 +97,25 @@
 			: ands ? and1
 			: eors ? eor1
 			: ors ? or1
-			:shftr ? shftr1
+			: shftr ? shftr1
 			: shftcr ? shftcr1
 			: 8'hzz;
 	
-	always@ (posedge clk)
+	always@ (negedge clk)
 	begin
 		if(reset)
 			store <= 8'h00;
+		else if(adlwa)
+			store <= adlin;
 		else if(decEn)
 			store <= temp;
 		else
 			store <= net;
 	end
+	always@ (posedge clk)
+	begin	
+		if(adlwa)
+			store <= adlin;
+	end
+
 	endmodule

@@ -17,8 +17,8 @@
 
 	always@ (posedge clk)
 	begin
-		//if clr set, initialise stack pointer to 8'hfa
 		if(clr)
+			//if clr set, init stk ptr to 8'hfa
 			store <= 8'hfa;
 		else if(wa)
 			store <= sbin;

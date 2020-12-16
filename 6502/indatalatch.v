@@ -1,3 +1,10 @@
+	/********************* INPUT DATA LATCH *******************
+	* register to store input data from the data bus
+	* every phi2 clock edge and
+	* output latched data to db,adl or adh
+	*
+	**********************************************************/
+
 	module inlatch(
 		input[7:0] datain,
 		output[7:0] databs,addrlow,addrhi,
