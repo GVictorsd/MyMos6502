@@ -78,11 +78,11 @@
 	wire  cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn;
 	wire  aluadloa,alusboa;
 	wire cout,zero,overflow,neg;
-	wire aluadlwa;
+	wire aludbwa;
 	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,preldzero,clk,clr,aOut,bOut);
 	alu Alu(aOut,bOut,clk,cin,sums,subs,ands,eors,ors,
-			shftr,shftcr,decEn,clr,aluadloa,alusboa,aluadlwa,
-			adl,adl,sb,cout,zero,overflow,neg);
+			shftr,shftcr,decEn,clr,aluadloa,alusboa,aludbwa,
+			db,adl,sb,cout,zero,overflow,neg);
 
 	//accumulator
 	wire  accwa,accdboa,accsboa; 
@@ -101,7 +101,7 @@
 	predecodereg predecreg(dataio,clk,instin);
 	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sinst,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,setzero,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,preldzero,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aluadlwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,setzero,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,preldzero,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aludbwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
 	always #2 clk = ~clk;
 
@@ -111,9 +111,12 @@
 		#4 clr<=0;
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
-		rm.store[16'h2857]<=8'h69;
-		rm.store[16'h2858]<=8'h47;
-		acc.store<=8'h12;
+
+		rm.store[16'h2857]<=8'h65;
+		rm.store[16'h2858]<=8'h22;
+		//rm.store[16'h2859]<=8'h24;
+		rm.store[16'h0022]<=8'h55;
+		acc.store<=8'h55;
 		#100 $finish;
 	end
 /*	initial

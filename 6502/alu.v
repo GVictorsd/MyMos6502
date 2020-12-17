@@ -15,8 +15,8 @@
 	input[7:0] aIn,bIn,
 	input clk,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,reset,
 	input adloa,sboa,
-	input adlwa,	//temp store adl in store
-	input[7:0] adlin,
+	input dbwa,	//temp store db in store
+	input[7:0] dbin,
 	output[7:0] adl,sb,
 	output cout,zero,overflow,neg);
 	
@@ -34,11 +34,12 @@
 	assign w2 = ~(carry6 | ~(aIn[7] & bIn[7]));
 	assign overflow = (w1 | w2);
 
-	assign cout = decEn ? tempc2
+	assign cout = tempc2|csum|csht|cshtc;
+			/*decEn ? tempc2
 			: (sums|subs) ? csum
 			: shftr ? csht
 			: shftcr ? cshtc
-			: 1'bz;
+			: 1'bz;*/
 
 	//assign results... 
 	wire[7:0] tempbIn;
@@ -105,8 +106,6 @@
 	begin
 		if(reset)
 			store <= 8'h00;
-		else if(adlwa)
-			store <= adlin;
 		else if(decEn)
 			store <= temp;
 		else
@@ -114,8 +113,8 @@
 	end
 	always@ (posedge clk)
 	begin	
-		if(adlwa)
-			store <= adlin;
+		if(dbwa)
+			store <= dbin;
 	end
 
 	endmodule

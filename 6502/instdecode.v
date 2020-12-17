@@ -29,57 +29,59 @@
 	predbwa,preadlwa,presbwa,preldzero,
 	cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,
 	aluadloa,alusboa,
-	aluadlwa,
+	aludbwa,
 	//accumulator
 	accwa,accdboa,accsboa,
 	//status register
 	sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
+	/***************** instruction opcodes ********************/
 	localparam[7:0] 
-		int=8'h00,opcode1=8'hzz,opcode2=8'hxx,adcimm=8'h69;
+		int=8'h00,
+		adcimm=8'h69,adcabs=8'h6d,adczp=8'h65;
 
 	
 	always@(*)
 	begin
-	{adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aluadlwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc,setstk,sinst,setstk,setzero,preldzero} = 59'd0;
+	{adhsb,dbsb,rw,dldboa,dladloa,dladhoa,
+	pcladlwa,pclinc,pcladloa,pcldboa,setreset,
+	setirq,setnmi,pchadhwa,pchadhoa,pchdboa,
+	dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,
+	spwa,spsboa,spadloa,spdec,predbwa,preadlwa,
+	presbwa,cin,sums,subs,ands,eors,ors,shftr,
+	shftcr,decEn,aluadloa,alusboa,aludbwa,accwa,
+	accdboa,accsboa,sircary,sirirqdis,sirdecmod,
+	sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc,setstk,
+	sinst,setstk,setzero,preldzero} = 59'd0;
 
 		case(cycle)
 			3'b000:begin
 				case(inst)
 					int:begin	//reset
-						if(clr)
-						begin
-							setreset<=1'b1;
-							icyc<=1;
+						if(clr) begin
+							setreset<=1'b1;icyc<=1;
 							sinst<=1;
 						end
-						else if(nmi)
-						begin
-							setnmi<=1'b1;
-							icyc<=1'b1;
+						else if(nmi) begin
+							setnmi<=1'b1;icyc<=1'b1;
 							sinst<=1'b1;
 						end
-						else if(irq) 
-						begin
-							setirq<=1'b1;
-							icyc<=1;
+						else if(irq) begin
+							setirq<=1'b1;icyc<=1;
 							sinst<=1;
 						end
 						else
-						begin
 							icyc<=1;
-							$display("hi1");
-						end
 					end
 					//add with carry(immediate)
-					adcimm:begin
+					adcimm,adcabs,adczp:begin
 						//Write alu out to acc
-						alusboa<=1;
-						accwa<=1;
-						icyc<=1;
+						alusboa<=1;accwa<=1;
+						icyc<=1;saluwa<=1;
 					end
 				endcase
 				end
+
 			3'b001:begin
 				case(inst)
 					int:begin
@@ -87,13 +89,13 @@
 						pcldboa<=1;dorwa<=1;doroa<=1;
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
-						$display("hi2");
 					end
-					//add with carry(immediate)
-					adcimm:begin
+					
+					adcimm,adcabs,adczp:begin
 						//Increment pc and load to add.bus.regs
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;icyc<=1;
+						$display("adcabs1");
 					end
 				endcase
 			end
@@ -106,11 +108,22 @@
 						rw<=1;spdec<=1;icyc<=1;
 						$display("hi3");
 					end
-					//add with carry(immediate)
+					
 					adcimm:begin
-					icyc<=1;
+						icyc<=1;
 					end
 
+					adczp:begin
+						dladloa<=1;ablwa<=1;setzero<=1;
+						abhwa<=1;icyc<=1;
+					end
+					
+					adcabs:begin
+						//Get data from nxt addr as operand addr lo
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						ablwa<=1;abhwa<=1;icyc<=1;
+						$display("adcabs2");
+					end
 				endcase
 			end
 			3'b011:begin
@@ -120,15 +133,28 @@
 						aoa<=1;dorwa<=1;doroa<=1;
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
-						$display("hi4");
 					end
 
 					adcimm:begin
-					//Get data from datalatch and acc to alu
-					dldboa<=1;accsboa<=1;predbwa<=1;presbwa<=1;sums<=1;
-					//Increment pc and get nxt inst
-					pclinc<=1;pcladloa<=1;pchadhoa<=1;abhwa<=1;ablwa<=1;rcyc<=1;
+						//Get data from datalatch and acc to alu
+						dldboa<=1;accsboa<=1;predbwa<=1;
+						presbwa<=1;sums<=1;
+						//Increment pc and get nxt inst
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						abhwa<=1;ablwa<=1;rcyc<=1;
 					end
+
+					adczp:begin
+						icyc<=1;
+					end
+
+					adcabs:begin
+						//Get data from nxt addr as operand addr hi
+						dldboa<=1;aludbwa<=1;aluadloa<=1;
+						dladhoa<=1;abhwa<=1;ablwa<=1;icyc<=1;
+						$display("adcabs3");
+					end
+
 				endcase
 			end
 			3'b100:begin
@@ -137,7 +163,20 @@
 						pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;
 						icyc<=1;
-						$display("hi5");
+					end
+
+					adcabs:begin
+						icyc<=1;
+						$display("adcabs4");
+					end
+
+					adczp:begin	
+						//Get data from datalatch and acc to alu
+						dldboa<=1;accsboa<=1;predbwa<=1;
+						presbwa<=1;sums<=1;
+						//Increment pc and get nxt inst
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						abhwa<=1;ablwa<=1;rcyc<=1;
 					end
 				endcase
 			end
@@ -147,7 +186,16 @@
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;
 						icyc<=1;ablwa<=1;
-						$display("hi6");
+					end
+
+					adcabs:begin
+						//Get data from datalatch and acc to alu
+						dldboa<=1;accsboa<=1;predbwa<=1;
+						presbwa<=1;sums<=1;
+						//Increment pc and get nxt inst
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						abhwa<=1;ablwa<=1;rcyc<=1;
+						$display("adcabs5");
 					end
 				endcase
 			end
