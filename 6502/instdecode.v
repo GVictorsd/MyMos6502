@@ -38,7 +38,8 @@
 	/***************** instruction opcodes ********************/
 	localparam[7:0] 
 		int=8'h00,
-		adcimm=8'h69,adcabs=8'h6d,adczp=8'h65;
+		adcimm=8'h69,adcabs=8'h6d,adczp=8'h65,
+		cli=8'h58,clc=8'h18,cld=8'hd8;
 
 	
 	always@(*)
@@ -79,6 +80,18 @@
 						alusboa<=1;accwa<=1;
 						icyc<=1;saluwa<=1;
 					end
+
+					cli:begin
+						sirirqdis<=0;sirwa<=1;icyc<=1;
+					end
+
+					clc:begin
+						sircary<=0;sirwa<=1;icyc<=1;
+					end
+
+					cld:begin
+						sirdecmod<=0;sirwa<=1;icyc<=1;
+					end
 				endcase
 				end
 
@@ -96,6 +109,12 @@
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;icyc<=1;
 						$display("adcabs1");
+					end
+
+					cli,clc,cld:begin	
+						//Increment pc and get nxt inst
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						abhwa<=1;ablwa<=1;rcyc<=1;
 					end
 				endcase
 			end

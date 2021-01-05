@@ -112,40 +112,19 @@
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
 
-		rm.store[16'h2857]<=8'h65;
-		rm.store[16'h2858]<=8'h22;
+		rm.store[16'h2857]<=8'h58;
+		//rm.store[16'h2858]<=8'h22;
 		//rm.store[16'h2859]<=8'h24;
 		rm.store[16'h0022]<=8'h55;
 		acc.store<=8'h55;
 		#100 $finish;
 	end
-/*	initial
-	begin
-		//lda...
-		#1 clr<=1;
-		#4 clr<=0;dl.store<=8'h05;ablwa<=1;dladloa=1;
-		#4 ablwa<=0;dladloa=0;dl.store<=8'h00;abhwa<=1;dladhoa=1;
-		$display("%h	%h\n",abh,abl);
-		#4 dl.store<=8'h00;abhwa<=0;dladhoa=0;
-		#4 dldboa<=1;accwa<=1;dbsb<=1; 
-		#4 dldboa<=0;accwa<=0;dbsb<=0;$display("%h",acc.store);
-		
-		//add...
-		#4 dl.store<=8'h06;ablwa<=1;dladloa=1;
-		#4 ablwa<=0;dladloa=0;dl.store<=8'h00;abhwa<=1;dladhoa=1;
-		$display("%h	%h\n",abh,abl);
-		#4 dl.store<=8'h0f;abhwa<=0;dladhoa=0;
-		#4 dldboa<=1;predbwa=1;accsboa<=1;presbwa=1;
-		#4 dldboa<=0;predbwa=0;accsboa<=0;presbwa=0;sums<=1;decEn<=1;
-		$display("%h	%h",pre.storeB,pre.storeA);
-		#4 sums<=0;decEn<=0;alusboa=1;accwa<=1;
-		#4 $display("%h",acc.store);
-		$finish;
-	end
-*/
+
 	initial
 	begin
 		$dumpfile("vars.vcd");
 		$dumpvars(0,board);
 	end
+
+
 	endmodule
