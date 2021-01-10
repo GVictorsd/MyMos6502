@@ -43,7 +43,13 @@
 		ldaimm=8'ha9,ldaabs=8'had,ldazp=8'ha5,
 		ldximm=8'ha2,ldxabs=8'hae,ldxzp=8'ha6,
 		ldyimm=8'ha0,ldyabs=8'hac,ldyzp=8'ha4,
-		cli=8'h58,clc=8'h18,cld=8'hd8;
+		eorimm=8'h49,eorabs=8'h4d,eorzp=8'h45,
+		oraimm=8'h09,oraabs=8'h0d,orazp=8'h05,
+		tax=8'haa,tay=8'ha8,tsx=8'hba,
+		txa=8'h8a,txs=8'h9a,tya=8'h98,
+		sec=8'h38,sed=8'hf8,sei=8'h78,
+		cli=8'h58,clc=8'h18,cld=8'hd8,
+		nop=8'hea;
 
 	
 	always@(*)
@@ -78,9 +84,13 @@
 						else
 							icyc<=1;
 					end
+
+					nop:icyc<=1;
 					
 					adcimm,adcabs,adczp,
-					andimm,andabs,andzp:begin
+					andimm,andabs,andzp,
+					eorimm,eorabs,eorzp,
+					oraimm,oraabs,orazp:begin
 						//Write alu out to acc
 						alusboa<=1;accwa<=1;
 						icyc<=1;saluwa<=1;
@@ -92,13 +102,36 @@
 						icyc<=1;
 					end
 
-					cli,clc,cld:begin
+					cli,clc,cld,
+					sec,sed,sei:begin
 
 						sirwa<=1;icyc<=1;
 
 						if(inst == cli)	sirirqdis<=0;
 						else if(inst == clc)	sircary<=0;
 						else if(inst == cld)	sirdecmod<=0;
+
+						else if(inst==sec)	sircary<=1;
+						else if(inst==sed)	sirdecmod<=1;
+						else if(inst==sei)	sirirqdis<=1;
+					end
+
+					tax,tay,tsx,
+					txa,txs,tya:begin
+
+						icyc<=1;
+						if(inst==tax) begin
+							accsboa<=1; xwa<=1;  end
+						else if(inst==tay) begin
+							accsboa<=1; ywa<=1;  end
+						else if(inst==tsx)	begin
+							spsboa<=1; xwa<=1;  end
+						else if(inst==txa)	begin
+							xoa<=1; accwa<=1;  end
+						else if(inst==txs)	begin
+							xoa<=1; spwa<=1;  end
+						else if(inst==tya)	begin
+							yoa<=1; accwa<=1;  end
 					end
 
 				endcase
@@ -112,9 +145,11 @@
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
 					end
-					
+
 					adcimm,adcabs,adczp,
 					andimm,andabs,andzp,
+					eorimm,eorabs,eorzp,
+					oraimm,oraabs,orazp,
 					ldaimm,ldaabs,ldazp,
 					ldximm,ldxabs,ldxzp,
 					ldyimm,ldyabs,ldyzp:begin
@@ -123,11 +158,16 @@
 						abhwa<=1;ablwa<=1;icyc<=1;
 					end
 
-					cli,clc,cld:begin	
+					cli,clc,cld,
+					sec,sed,sei,
+					nop,tax,tay,
+					tsx,txa,txs,
+					tya:begin
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;rcyc<=1;
 					end
+
 				endcase
 			end
 			3'b010:begin
@@ -140,18 +180,21 @@
 					end
 					
 					adcimm,andimm,ldaimm,
-					ldximm,ldyimm:begin
+					eorimm,ldximm,ldyimm,
+					oraimm:begin
 						icyc<=1;
 					end
 
 					adczp,andzp,ldazp,
-					ldxzp,ldyzp:begin
+					ldxzp,ldyzp,eorzp,
+					orazp:begin
 						dladloa<=1;ablwa<=1;setzero<=1;
 						abhwa<=1;icyc<=1;
 					end
 					
 					adcabs,andabs,ldaabs,
-					ldxabs,ldyabs:begin
+					ldxabs,ldyabs,eorabs,
+					oraabs:begin
 						//Get data from nxt addr as operand addr lo
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;icyc<=1;
@@ -168,34 +211,28 @@
 					end
 
 					adcimm,andimm,ldaimm,
-					ldximm,ldyimm:begin
+					eorimm,ldximm,ldyimm,
+					oraimm:begin
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;rcyc<=1;
 
-						if(inst==adcimm)
+						if(inst==adcimm | inst==andimm | inst==eorimm | inst==oraimm)
 						begin
 							//Get data from datalatch and acc to alu
 							dldboa<=1;accsboa<=1;predbwa<=1;
 							presbwa<=1;
-							sums<=1;
-							$display("!!!!! %b!!!",adcimm);
+							if(inst==adcimm)	sums<=1;
+							else if(inst==andimm)	ands<=1;
+							else if(inst==eorimm)	eors<=1;
+							else if(inst==oraimm)	ors<=1;
 						end
 
-						else if(inst==andimm)
-						begin
-							//Get data from datalatch and acc to alu
-							dldboa<=1;accsboa<=1;predbwa<=1;
-							presbwa<=1;
-							ands<=1;
-							$display("and011");
-						end
 						/**** load insts... *****/
 
 						else if(inst==ldaimm | inst==ldximm | inst==ldyimm)
 						begin
 							dldboa<=1;dbsb<=1;
-
 							if(inst==ldaimm)	accwa<=1;
 							else if(inst==ldximm)	xwa<=1;
 							else if(inst==ldyimm)	ywa<=1;
@@ -204,11 +241,15 @@
 
 
 
-					adczp,andzp,ldazp,ldxzp,ldyzp:begin
+					adczp,andzp,ldazp,
+					ldxzp,ldyzp,eorzp,
+					orazp:begin
 						icyc<=1;
 					end
 
-					adcabs,andabs,ldaabs,ldxabs,ldyabs:begin
+					adcabs,andabs,ldaabs,
+					ldxabs,ldyabs,eorabs,
+					oraabs:begin
 						//Get data from nxt addr as operand addr hi
 						dldboa<=1;aludbwa<=1;aluadloa<=1;
 						dladhoa<=1;abhwa<=1;ablwa<=1;icyc<=1;
@@ -224,11 +265,15 @@
 						icyc<=1;
 					end
 
-					adcabs,andabs,ldaabs,ldxabs,ldyabs:begin
+					adcabs,andabs,ldaabs,
+					ldxabs,ldyabs,eorabs,
+					oraabs:begin
 						icyc<=1;
 					end
 
-					adczp,andzp,ldazp,ldxzp,ldyzp:begin
+					adczp,andzp,ldazp,
+					ldxzp,ldyzp,eorzp,
+					orazp:begin
 						//Get data from datalatch and acc to alu
 						dldboa<=1;accsboa<=1;predbwa<=1;
 						presbwa<=1;
@@ -236,22 +281,18 @@
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;rcyc<=1;
 
-						if(inst==adczp)
+						if(inst==adczp | inst==andzp | inst==eorzp | inst==orazp)
 						begin
 							//Get data from datalatch and acc to alu
 							dldboa<=1;accsboa<=1;predbwa<=1;
 							presbwa<=1;
-							sums<=1;
+							if(inst==adczp)	sums<=1;
+							else if(inst==andzp)	ands<=1;
+							else if(inst==eorzp)	eors<=1;
+							else if(inst==orazp)	ors<=1;
 						end
 
-						else if(inst==andzp)
-						begin
-							//Get data from datalatch and acc to alu
-							dldboa<=1;accsboa<=1;predbwa<=1;
-							presbwa<=1;
-							ands<=1;
-						end
-
+						//load instructions
 						else if(inst==ldazp | inst==ldxzp | inst==ldyzp)
 						begin
 							dldboa<=1;dbsb<=1;
@@ -272,28 +313,25 @@
 					end
 
 					adcabs,andabs,ldaabs,
-					ldxabs,ldyabs:begin
+					ldxabs,ldyabs,eorabs,
+					oraabs:begin
 						
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;rcyc<=1;
 						
-						if(inst==adcabs)
+						if(inst==adcabs | inst==andabs | inst==eorabs | inst==oraabs)
 						begin
 							//Get data from datalatch and acc to alu
 							dldboa<=1;accsboa<=1;predbwa<=1;
 							presbwa<=1;
-							sums<=1;
+							if(inst==adcabs)	sums<=1;
+							else if(inst==andabs)	ands<=1;
+							else if(inst==eorabs)	eors<=1;
+							else if(inst==oraabs)	ors<=1;
 						end
 
-						else if(inst==andabs)
-						begin
-							//Get data from datalatch and acc to alu
-							dldboa<=1;accsboa<=1;predbwa<=1;
-							presbwa<=1;
-							ands<=1;
-						end
-
+						// load instructions
 						else if(inst==ldaabs | inst==ldxabs | inst==ldyabs)
 						begin
 							dldboa<=1;dbsb<=1;

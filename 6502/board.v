@@ -112,11 +112,11 @@
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
 
-		rm.store[16'h2857]<=8'ha9;
-		rm.store[16'h2858]<=8'h5f;
+		rm.store[16'h2857]<=8'h49;
+		rm.store[16'h2858]<=8'haa;
 		//rm.store[16'h2859]<=8'h24;
 		rm.store[16'h0022]<=8'h55;
-		acc.store<=8'hff;
+		acc.store<=8'haa;
 		#100 $finish;
 	end
 
