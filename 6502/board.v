@@ -107,21 +107,23 @@
 
 	initial
 	begin
+		$monitor("******* %8h",rm.store[16'h2223]);
 		#1 clr<=1;
 		#4 clr<=0;
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
 
-		rm.store[16'h2857]<=8'h49;
-		rm.store[16'h2858]<=8'haa;
-		//rm.store[16'h2859]<=8'h24;
-		rm.store[16'h0022]<=8'h55;
-		acc.store<=8'haa;
+		rm.store[16'h2857]<=8'hee;
+		rm.store[16'h2858]<=8'h23;
+		rm.store[16'h2859]<=8'h22;
+		rm.store[16'h2223]<=8'h44;
+		acc.store<=8'h23;
 		#100 $finish;
 	end
 
-	always@(acc.store)
-		$display("%8b",acc.store);
+	always@(acc.store)begin
+		$display("%8h",acc.store);
+	end
 
 	initial
 	begin
