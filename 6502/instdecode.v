@@ -47,8 +47,9 @@
 		eorimm=8'h49,eorabs=8'h4d,eorzp=8'h45,
 		oraimm=8'h09,oraabs=8'h0d,orazp=8'h05,
 		cmpimm=8'hc9,cmpabs=8'hcd,cmpzp=8'hc5,
-		bitabs=8'h2c,bitzp=8'h24,
-		incabs=8'hee,inczp=8'he6,
+		bitabs=8'h2c,bitzp=8'h24,deczp=8'hc6,
+		incabs=8'hee,inczp=8'he6,decabs=8'hce,
+		inx=8'he8,iny=8'hc8,dex=8'hca,dey=8'h88,
 		tax=8'haa,tay=8'ha8,tsx=8'hba,
 		txa=8'h8a,txs=8'h9a,tya=8'h98,
 		sec=8'h38,sed=8'hf8,sei=8'h78,
@@ -90,6 +91,17 @@
 					end
 
 					nop:icyc<=1;
+
+
+					incabs,inczp,
+					decabs,deczp:begin
+						//Increment pc and get nxt inst
+						pclinc<=1;pcladloa<=1;pchadhoa<=1;
+						abhwa<=1;ablwa<=1;rcyc<=1;
+						
+						//output data and toggle rw
+						rw<=1;doroa<=1;
+					end
 					
 					adcimm,adcabs,adczp,
 					sbcimm,sbcabs,sbczp,
@@ -127,7 +139,9 @@
 					end
 
 					tax,tay,tsx,
-					txa,txs,tya:begin
+					txa,txs,tya,
+					inx,iny,dex,
+					dey:begin
 
 						icyc<=1;
 						if(inst==tax) begin
@@ -142,6 +156,10 @@
 							xoa<=1; spwa<=1;  end
 						else if(inst==tya)	begin
 							yoa<=1; accwa<=1;  end
+						else if(inst==inx|inst==dex)begin
+							alusboa<=1;xwa<=1;	end
+						else if(inst==iny|inst==dey)begin
+							alusboa<=1;ywa<=1;	end
 					end
 
 				endcase
@@ -166,7 +184,8 @@
 					ldyimm,ldyabs,ldyzp,
 					cmpimm,cmpabs,cmpzp,
 					bitabs,bitzp,
-					incabs:begin
+					incabs,inczp,
+					decabs,deczp:begin
 						//Increment pc and load to add.bus.regs
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;icyc<=1;
@@ -176,10 +195,27 @@
 					sec,sed,sei,
 					nop,tax,tay,
 					tsx,txa,txs,
-					tya:begin
+					tya,inx,iny,
+					dex,dey:begin
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;rcyc<=1;
+						if(inst==inx|inst==iny|inst==dex|inst==dey)begin
+							dbsb<=1;predbwa<=1;
+							preldzero<=1;
+							if(inst==inx)begin
+								xoa<=1;sums<=1;
+								sircary<=1;sirwa<=1;end
+							else if(inst==iny)begin
+								yoa<=1;sums<=1;
+								sircary<=1;sirwa<=1;end
+							else if(inst==dex)begin
+								xoa<=1;subs<=1;
+								sircary<=0;sirwa<=1;end
+							else if(inst==dey)begin
+								yoa<=1;subs<=1;
+								sircary<=0;sirwa<=1;end
+						end
 					end
 
 				endcase
@@ -202,7 +238,7 @@
 					adczp,andzp,ldazp,
 					ldxzp,ldyzp,eorzp,
 					orazp,sbczp,cmpzp,
-					bitzp:begin
+					bitzp,inczp,deczp:begin
 						dladloa<=1;ablwa<=1;setzero<=1;
 						abhwa<=1;icyc<=1;
 					end
@@ -210,7 +246,7 @@
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs:begin
+					bitabs,incabs,decabs:begin
 						//Get data from nxt addr as operand addr lo
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;icyc<=1;
@@ -264,14 +300,14 @@
 					adczp,andzp,ldazp,
 					ldxzp,ldyzp,eorzp,
 					orazp,sbczp,cmpzp,
-					bitzp:begin
+					bitzp,inczp,deczp:begin
 						icyc<=1;
 					end
 
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs:begin
+					bitabs,incabs,decabs:begin
 						//Get data from nxt addr as operand addr hi
 						dldboa<=1;aludbwa<=1;aluadloa<=1;
 						dladhoa<=1;abhwa<=1;ablwa<=1;icyc<=1;
@@ -290,8 +326,20 @@
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs:begin
+					bitabs,incabs,decabs:begin
 						icyc<=1;
+					end
+
+
+					inczp,deczp:begin
+						icyc<=1;
+						if(inst==inczp| inst==deczp)
+						begin
+							dldboa<=1;predbwa<=1;
+							cin<=1;preldzero<=1;
+							if(inst==inczp)	sums<=1;
+							else if(inst==deczp)	subs<=1;
+						end
 					end
 
 					adczp,andzp,ldazp,
@@ -319,7 +367,6 @@
 								subs<=1; sirwa<=1; sircary<=0;
 							end
 						end
-
 						//load instructions
 						else if(inst==ldazp | inst==ldxzp | inst==ldyzp)
 						begin
@@ -340,14 +387,21 @@
 						icyc<=1;ablwa<=1;
 					end
 
-					incabs:begin
+					incabs,decabs:begin
 						icyc<=1;
-						if(inst==incabs)
+						if(inst==incabs|inst==decabs)
 						begin
 							dldboa<=1;predbwa<=1;
 							cin<=1;preldzero<=1;
-							sums<=1;
+							if(inst==incabs)	sums<=1;
+							else if(inst==decabs)	subs<=1;
 						end
+					end
+
+					inczp,deczp:begin
+						// output result to sb->db->outReg
+						alusboa<=1;dbsb<=1;dorwa<=1;
+						rcyc<=1;
 					end
 
 					adcabs,andabs,ldaabs,
@@ -391,10 +445,10 @@
 						dladloa<=1;dladhoa<=1;pcladlwa<=1;abhwa<=1;
 						icyc<=1;
 					end
-					incabs:begin
+					incabs,decabs:begin
 						// output result to sb->db->outReg
 						alusboa<=1;dbsb<=1;dorwa<=1;
-						icyc<=1;
+						rcyc<=1;
 					end
 				endcase
 			end
@@ -403,14 +457,6 @@
 					int:begin
 						pchadhwa<=1;dladhoa<=1;pcladloa<=1;ablwa<=1;
 						rcyc<=1;
-					end
-					incabs:begin
-						//Increment pc and get nxt inst
-						pclinc<=1;pcladloa<=1;pchadhoa<=1;
-						abhwa<=1;ablwa<=1;rcyc<=1;
-						
-						//output data and toggle rw
-						rw<=1;doroa<=1;
 					end
 				endcase
 			end

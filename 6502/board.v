@@ -80,7 +80,7 @@
 	wire cout,zero,overflow,neg;
 	wire aludbwa;
 	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,preldzero,clk,clr,aOut,bOut);
-	alu Alu(aOut,bOut,clk,cin,sums,subs,ands,eors,ors,
+	alu Alu(aOut,bOut,clk,cin|status[0],sums,subs,ands,eors,ors,
 			shftr,shftcr,decEn,clr,aluadloa,alusboa,aludbwa,
 			db,adl,sb,cout,zero,overflow,neg);
 
@@ -113,11 +113,12 @@
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
 
-		rm.store[16'h2857]<=8'hee;
+		rm.store[16'h2857]<=8'hce;
 		rm.store[16'h2858]<=8'h23;
 		rm.store[16'h2859]<=8'h22;
-		rm.store[16'h2223]<=8'h44;
+		rm.store[16'h2223]<=8'h01;
 		acc.store<=8'h23;
+		x.store<=8'h23;
 		#100 $finish;
 	end
 
