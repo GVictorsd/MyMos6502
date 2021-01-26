@@ -24,10 +24,10 @@
 	//index registers(x and y)
 	xwa,xoa,ywa,yoa,
 	//stack pointer
-	spwa,spsboa,spadloa,spdec,
+	spwa,spsboa,spadloa,spdec,spinc,
 	//alu
 	predbwa,preadlwa,presbwa,preldzero,
-	cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,
+	sums,subs,ands,eors,ors,shftr,shftcr,decEn,
 	aluadloa,alusboa,
 	aludbwa,
 	//accumulator
@@ -52,6 +52,9 @@
 		inx=8'he8,iny=8'hc8,dex=8'hca,dey=8'h88,
 		tax=8'haa,tay=8'ha8,tsx=8'hba,
 		txa=8'h8a,txs=8'h9a,tya=8'h98,
+		staabs=8'h8d,stazp=8'h85,
+		pha=8'h48,php=8'h08,pla=8'h68,
+		plp=8'h28,jmp=8'h4c,jsr=8'h20,
 		sec=8'h38,sed=8'hf8,sei=8'h78,
 		cli=8'h58,clc=8'h18,cld=8'hd8,
 		nop=8'hea;
@@ -63,12 +66,12 @@
 	pcladlwa,pclinc,pcladloa,pcldboa,setreset,
 	setirq,setnmi,pchadhwa,pchadhoa,pchdboa,
 	dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,
-	spwa,spsboa,spadloa,spdec,predbwa,preadlwa,
-	presbwa,cin,sums,subs,ands,eors,ors,shftr,
+	spwa,spsboa,spadloa,spdec,spinc,predbwa,preadlwa,
+	presbwa,sums,subs,ands,eors,ors,shftr,
 	shftcr,decEn,aluadloa,alusboa,aludbwa,accwa,
 	accdboa,accsboa,sircary,sirirqdis,sirdecmod,
 	sirwa,saluwa,abuswa,aoa,icyc,rcyc,scyc,setstk,
-	sinst,setstk,setzero,preldzero} = 59'd0;
+	sinst,setstk,setzero,preldzero} = 60'd0;
 
 		case(cycle)
 			3'b000:begin
@@ -90,17 +93,19 @@
 							icyc<=1;
 					end
 
+					jsr:begin
+						pchadhwa<=1;dladhoa<=1;pcladloa<=1;ablwa<=1;
+						icyc<=1;
+					end
+
 					nop:icyc<=1;
 
-
 					incabs,inczp,
-					decabs,deczp:begin
+					decabs,deczp,staabs,
+					pha,php,pla,plp:begin
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
-						abhwa<=1;ablwa<=1;rcyc<=1;
-						
-						//output data and toggle rw
-						rw<=1;doroa<=1;
+						abhwa<=1;ablwa<=1;icyc<=1;
 					end
 					
 					adcimm,adcabs,adczp,
@@ -122,6 +127,12 @@
 					cmpimm,cmpabs,cmpzp,
 					bitabs,bitzp:begin
 						icyc<=1; saluwa<=1;
+					end
+
+					jmp:begin
+						// update the program counter
+						dladhoa<=1;pchadhwa<=1;
+						icyc<=1;
 					end
 
 					cli,clc,cld,
@@ -167,11 +178,27 @@
 
 			3'b001:begin
 				case(inst)
-					int:begin
+					int,jsr:begin
 						//write pcl to stack
 						pcldboa<=1;dorwa<=1;doroa<=1;
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
+					end
+
+					pha,php:begin
+						//write pcl to stack
+						dorwa<=1;
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						spdec<=1;icyc<=1;
+						if(inst == pha)
+							accdboa<=1;
+						if(inst == php)
+							aoa<=1;
+					end
+					pla,plp:begin
+						//set stack ptr to addreg
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						spinc<=1;icyc<=1;
 					end
 
 					adcimm,adcabs,adczp,
@@ -185,7 +212,9 @@
 					cmpimm,cmpabs,cmpzp,
 					bitabs,bitzp,
 					incabs,inczp,
-					decabs,deczp:begin
+					decabs,deczp,
+					staabs,stazp,
+					jmp:begin
 						//Increment pc and load to add.bus.regs
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;icyc<=1;
@@ -222,23 +251,31 @@
 			end
 			3'b010:begin
 				case(inst)
-					int:begin	//reset
+					int,jsr:begin	//reset
 						//write pch to stack
 						pchdboa<=1;dorwa<=1;doroa<=1;
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
 					end
-					
+
+					pha,php:begin
+						//write to ram...
+						doroa<=1;rw<=1;
+						rcyc<=1;
+					end
+
 					adcimm,andimm,ldaimm,
 					eorimm,ldximm,ldyimm,
-					oraimm,sbcimm,cmpimm:begin
+					oraimm,sbcimm,cmpimm,
+					pla,plp:begin
 						icyc<=1;
 					end
 
 					adczp,andzp,ldazp,
 					ldxzp,ldyzp,eorzp,
 					orazp,sbczp,cmpzp,
-					bitzp,inczp,deczp:begin
+					bitzp,inczp,deczp,
+					stazp:begin
 						dladloa<=1;ablwa<=1;setzero<=1;
 						abhwa<=1;icyc<=1;
 					end
@@ -246,7 +283,8 @@
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs,decabs:begin
+					bitabs,incabs,decabs,
+					staabs,jmp:begin
 						//Get data from nxt addr as operand addr lo
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;icyc<=1;
@@ -255,11 +293,20 @@
 			end
 			3'b011:begin
 				case(inst)
-					int:begin
+					int,jsr:begin
 						//write status to stack
 						aoa<=1;dorwa<=1;doroa<=1;
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						rw<=1;spdec<=1;icyc<=1;
+					end
+
+					pla,plp:begin
+						dldboa<=1;dbsb<=1;
+						rcyc<=1;
+						if(inst==pla)
+							accwa<=1;
+						if(inst==plp)
+							abuswa<=1;
 					end
 
 					adcimm,andimm,ldaimm,
@@ -300,24 +347,32 @@
 					adczp,andzp,ldazp,
 					ldxzp,ldyzp,eorzp,
 					orazp,sbczp,cmpzp,
-					bitzp,inczp,deczp:begin
+					bitzp,inczp,deczp,
+					stazp:begin
 						icyc<=1;
+					end
+
+					jmp:begin
+						dladloa<=1;pcladlwa<=1;rcyc<=1;
 					end
 
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs,decabs:begin
+					bitabs,incabs,decabs,
+					staabs:begin
 						//Get data from nxt addr as operand addr hi
 						dldboa<=1;aludbwa<=1;aluadloa<=1;
 						dladhoa<=1;abhwa<=1;ablwa<=1;icyc<=1;
+/////						if(inst==staabs)begin
+//////////							accdboa<=1;dorwa<=1;
+//////						end
 					end
-
 				endcase
 			end
 			3'b100:begin
 				case(inst)
-					int:begin
+					int,jsr:begin
 						pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;
 						icyc<=1;
@@ -326,8 +381,13 @@
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
-					bitabs,incabs,decabs:begin
+					bitabs,incabs,decabs,
+					staabs:begin
 						icyc<=1;
+////////						if(inst == staabs)begin
+							//output data and toggle rw
+////							rw<=1;doroa<=1;rcyc<=1;
+/////						end
 					end
 
 
@@ -336,7 +396,7 @@
 						if(inst==inczp| inst==deczp)
 						begin
 							dldboa<=1;predbwa<=1;
-							cin<=1;preldzero<=1;
+							sircary<=1;sirwa<=1;preldzero<=1;
 							if(inst==inczp)	sums<=1;
 							else if(inst==deczp)	subs<=1;
 						end
@@ -381,20 +441,25 @@
 			end
 			3'b101:begin
 				case(inst)
-					int:begin
+					int,jsr:begin
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;
 						icyc<=1;ablwa<=1;
 					end
 
-					incabs,decabs:begin
+					incabs,decabs,staabs:begin
 						icyc<=1;
 						if(inst==incabs|inst==decabs)
 						begin
 							dldboa<=1;predbwa<=1;
-							cin<=1;preldzero<=1;
+							sircary<=1;sirwa<=1;preldzero<=1;
 							if(inst==incabs)	sums<=1;
 							else if(inst==decabs)	subs<=1;
+						end
+
+						if(inst == staabs)begin
+							//output data and toggle rw
+							rw<=1;doroa<=1;rcyc<=1;
 						end
 					end
 
@@ -441,9 +506,11 @@
 			end
 			3'b110:begin
 				case(inst)
-					int:begin
+					int,jsr:begin
 						dladloa<=1;dladhoa<=1;pcladlwa<=1;abhwa<=1;
 						icyc<=1;
+						if(inst==jsr)
+							rcyc<=1;
 					end
 					incabs,decabs:begin
 						// output result to sb->db->outReg

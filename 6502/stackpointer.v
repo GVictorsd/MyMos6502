@@ -8,7 +8,7 @@
 
 	module stackpointer(
 		input[7:0] sbin,
-		input clk,clr,wa,dec,sboa,adloa,
+		input clk,clr,wa,dec,inc,sboa,adloa,
 		output[7:0] sbout,adlout);
 	reg[7:0] store;
 
@@ -24,5 +24,7 @@
 			store <= sbin;
 		else if(dec)
 			store <= store-1'b1;
+		else if(inc)
+			store <= store+1'b1;
 	end
 	endmodule

@@ -69,18 +69,18 @@
 	register1 y(sb,clk,ywa,yoa,clr);
 
 	//stack pointer
-	wire  spwa,spsboa,spadloa,spdec;
-	stackpointer sp(sb,clk,clr,spwa,spdec,spsboa,spadloa,sb,adl);
+	wire  spwa,spsboa,spadloa,spdec,spinc;
+	stackpointer sp(sb,clk,clr,spwa,spdec,spinc,spsboa,spadloa,sb,adl);
 
 	//alu
 	wire[7:0] aOut,bOut;
 	wire  predbwa,preadlwa,presbwa,preldzero;
-	wire  cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn;
+	wire  sums,subs,ands,eors,ors,shftr,shftcr,decEn;
 	wire  aluadloa,alusboa;
 	wire cout,zero,overflow,neg;
 	wire aludbwa;
 	prealu pre(db,adl,sb,predbwa,preadlwa,presbwa,preldzero,clk,clr,aOut,bOut);
-	alu Alu(aOut,bOut,clk,cin|status[0],sums,subs,ands,eors,ors,
+	alu Alu(aOut,bOut,clk,status[0],sums,subs,ands,eors,ors,
 			shftr,shftcr,decEn,clr,aluadloa,alusboa,aludbwa,
 			db,adl,sb,cout,zero,overflow,neg);
 
@@ -101,29 +101,29 @@
 	predecodereg predecreg(dataio,clk,instin);
 	instctrl ir(instin,~clk,irq,clr,icyc,rcyc,scyc,sinst,sync,instout,cycout);
 	wire contsig;
-	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,setzero,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,predbwa,preadlwa,presbwa,preldzero,cin,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aludbwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
+	instdecode instdec(instout,cycout,clr,irq,nmi,icyc,rcyc,scyc,sinst,adhsb,dbsb,rw,dldboa,dladloa,dladhoa,pcladlwa,pclinc,pcladloa,pcldboa,setreset,setirq,setnmi,setstk,setzero,pchadhwa,pchadhoa,pchdboa,dorwa,doroa,abhwa,ablwa,xwa,xoa,ywa,yoa,spwa,spsboa,spadloa,spdec,spinc,predbwa,preadlwa,presbwa,preldzero,sums,subs,ands,eors,ors,shftr,shftcr,decEn,aluadloa,alusboa,aludbwa,accwa,accdboa,accsboa,sircary,sirirqdis,sirdecmod,sirwa,saluwa,abuswa,aoa);
 
 	always #2 clk = ~clk;
 
 	initial
 	begin
-		$monitor("******* %8h",rm.store[16'h2223]);
+		$monitor("******* %8h",rm.store[16'h00]);
 		#1 clr<=1;
 		#4 clr<=0;
 		rm.store[16'hfffc]<=8'h57;
 		rm.store[16'hfffd]<=8'h28;
 
-		rm.store[16'h2857]<=8'hce;
-		rm.store[16'h2858]<=8'h23;
-		rm.store[16'h2859]<=8'h22;
-		rm.store[16'h2223]<=8'h01;
-		acc.store<=8'h23;
-		x.store<=8'h23;
+		rm.store[16'h2857]<=8'h4c;
+		rm.store[16'h2858]<=8'ha3;
+		rm.store[16'h2859]<=8'ha2;
+//		rm.store[16'h2223]<=8'h01;
+		acc.store<=8'h00;
+		x.store<=8'hdd;
 		#100 $finish;
 	end
 
 	always@(acc.store)begin
-		$display("%8h",acc.store);
+		$display("acc:  	 %8h",acc.store);
 	end
 
 	initial
