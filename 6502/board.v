@@ -22,10 +22,11 @@
 //		inout[7:0] dataio,
 //		input clk,clr,irq,nmi,
 //		output[7:0] abh,abl,
-		output sync,rw);
+		input clr,
+		output sync, rw);
 
 	wire[7:0] db,adl,adh,sb;
-	reg  clr=0,clk=0,irq=0,nmi=0;
+	reg  /*clr=0,*/clk=0,irq=0,nmi=0;
 	
 
 	wire[7:0] dataio,abh,abl;
@@ -105,22 +106,22 @@
 
 	always #2 clk = ~clk;
 
-	initial
-	begin
-		$monitor("******* %8h",rm.store[16'h00]);
-		#1 clr<=1;
-		#4 clr<=0;
-		rm.store[16'hfffc]<=8'h57;
-		rm.store[16'hfffd]<=8'h28;
-
-		rm.store[16'h2857]<=8'h4c;
-		rm.store[16'h2858]<=8'ha3;
-		rm.store[16'h2859]<=8'ha2;
-//		rm.store[16'h2223]<=8'h01;
-		acc.store<=8'h00;
-		x.store<=8'hdd;
-		#100 $finish;
-	end
+//	initial
+//	begin
+//		$monitor("******* %8h",rm.store[16'h00]);
+//		#1 clr<=1;
+//		#4 clr<=0;
+//		rm.store[16'hfffc]<=8'h57;
+//		rm.store[16'hfffd]<=8'h28;
+//
+//		rm.store[16'h2857]<=8'h4c;
+//		rm.store[16'h2858]<=8'ha3;
+//		rm.store[16'h2859]<=8'ha2;
+////		rm.store[16'h2223]<=8'h01;
+//		acc.store<=8'h00;
+//		x.store<=8'hdd;
+//		#100 $finish;
+//	end
 
 	always@(acc.store)begin
 		$display("acc:  	 %8h",acc.store);

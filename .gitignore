@@ -1,4 +1,6 @@
 *.out
 *.vcd
 *.pdf
+*.txt
 *.swp
+program.v
