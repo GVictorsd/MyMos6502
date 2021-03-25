@@ -55,6 +55,7 @@
 		staabs=8'h8d,stazp=8'h85,
 		pha=8'h48,php=8'h08,pla=8'h68,
 		plp=8'h28,jmp=8'h4c,jsr=8'h20,
+		rts=8'h60,rti=8'h40,
 		sec=8'h38,sed=8'hf8,sei=8'h78,
 		cli=8'h58,clc=8'h18,cld=8'hd8,
 		nop=8'hea;
@@ -102,7 +103,8 @@
 
 					incabs,inczp,
 					decabs,deczp,staabs,
-					pha,php,pla,plp:begin
+					pha,php,pla,plp,rts,
+					rti:begin
 						//Increment pc and get nxt inst
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						abhwa<=1;ablwa<=1;icyc<=1;
@@ -195,7 +197,7 @@
 						if(inst == php)
 							aoa<=1;
 					end
-					pla,plp:begin
+					pla,plp,rts,rti:begin
 						//set stack ptr to addreg
 						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
 						spinc<=1;icyc<=1;
@@ -271,6 +273,13 @@
 						icyc<=1;
 					end
 
+					rts,rti:begin
+						//set stack ptr to addreg
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						spinc<=1;icyc<=1;
+					end
+
+
 					adczp,andzp,ldazp,
 					ldxzp,ldyzp,eorzp,
 					orazp,sbczp,cmpzp,
@@ -307,6 +316,14 @@
 							accwa<=1;
 						if(inst==plp)
 							abuswa<=1;
+					end
+
+					rts,rti:begin
+						//write to the status register
+						dldboa<=1;abuswa<=1;
+						//set stack ptr to addreg
+						setstk<=1;spadloa<=1;ablwa<=1;abhwa<=1;
+						spinc<=1;icyc<=1;
 					end
 
 					adcimm,andimm,ldaimm,
@@ -378,6 +395,11 @@
 						icyc<=1;
 					end
 
+					rts,rti:begin
+						dladhoa<=1;pchadhwa<=1;
+						icyc<=1;
+					end
+
 					adcabs,andabs,ldaabs,
 					ldxabs,ldyabs,eorabs,
 					oraabs,sbcabs,cmpabs,
@@ -445,6 +467,11 @@
 						pclinc<=1;pcladloa<=1;pchadhoa<=1;
 						ablwa<=1;abhwa<=1;
 						icyc<=1;ablwa<=1;
+					end
+
+					rts,rti:begin
+						dladloa<=1;pcladlwa<=1;
+						rcyc<=1;
 					end
 
 					incabs,decabs,staabs:begin
